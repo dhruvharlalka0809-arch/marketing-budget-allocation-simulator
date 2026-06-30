@@ -2,6 +2,10 @@
 
 A Streamlit simulator for marketing channel mix planning, CAC, ROI, payback, revenue forecasting, contribution analysis, and budget trade-off recommendations.
 
+## Live Demo
+
+[Open the Streamlit app](https://budget-allocation-simulator.streamlit.app/)
+
 ## What It Does
 
 - Simulates current vs recommended marketing budget allocation
