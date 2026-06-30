@@ -54,16 +54,22 @@ with st.sidebar:
     st.header("Scenario Controls")
     uploaded_file = st.file_uploader("Upload channel assumptions CSV", type="csv")
     active_channels = pd.read_csv(uploaded_file) if uploaded_file else load_sample_channels()
-    current_budget = float(active_channels["Current_Spend"].sum())
+    stage_filter = st.multiselect("Funnel stage filter", sorted(active_channels["Funnel_Stage"].dropna().unique()))
+    scenario_channels = active_channels.copy()
+    if stage_filter:
+        scenario_channels = scenario_channels.loc[scenario_channels["Funnel_Stage"].isin(stage_filter)]
+    st.caption("No stage selected = all channels included.")
+
+    current_budget = float(scenario_channels["Current_Spend"].sum())
+    min_budget = int(scenario_channels["Min_Spend"].sum())
+    max_budget = int(scenario_channels["Max_Spend"].sum())
     total_budget = st.slider(
         "Total monthly budget",
-        min_value=int(active_channels["Min_Spend"].sum()),
-        max_value=int(active_channels["Max_Spend"].sum()),
-        value=int(current_budget),
+        min_value=min_budget,
+        max_value=max_budget,
+        value=min(max(int(current_budget), min_budget), max_budget),
         step=5000,
     )
-    stage_filter = st.multiselect("Funnel stage filter", sorted(active_channels["Funnel_Stage"].dropna().unique()))
-    st.caption("No stage selected = all channels included.")
 
     st.header("Allocation Weights")
     contribution_weight = st.slider("Contribution ROI", 0.00, 0.50, 0.35, 0.01)
@@ -81,9 +87,6 @@ weights = AllocationWeights(
 )
 
 try:
-    scenario_channels = active_channels.copy()
-    if stage_filter:
-        scenario_channels = scenario_channels.loc[scenario_channels["Funnel_Stage"].isin(stage_filter)]
     if scenario_channels.empty:
         st.warning("No channels match the selected stage filter.")
         st.stop()
@@ -178,7 +181,7 @@ with economics_tab:
 
 with memo_tab:
     st.subheader("Budget Allocation Memo")
-    memo = build_scenario_memo(combined, summary)
+    memo = build_scenario_memo(summary, bridge)
     st.markdown(memo)
     st.download_button("Download memo", memo, "marketing_budget_allocation_memo.md", "text/markdown")
 

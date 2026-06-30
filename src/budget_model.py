@@ -94,20 +94,7 @@ def project_plan(channels: pd.DataFrame, spend: pd.Series, plan_name: str) -> pd
 
 
 def build_opportunity_scores(plan: pd.DataFrame, weights: AllocationWeights = AllocationWeights()) -> pd.Series:
-    total_weight = (
-        weights.contribution
-        + weights.cac
-        + weights.payback
-        + weights.retention
-        + weights.strategic_priority
-    ) or 1.0
-    normalized = AllocationWeights(
-        contribution=weights.contribution / total_weight,
-        cac=weights.cac / total_weight,
-        payback=weights.payback / total_weight,
-        retention=weights.retention / total_weight,
-        strategic_priority=weights.strategic_priority / total_weight,
-    )
+    normalized = normalize_weights(weights)
     scores = (
         score_positive(plan["Contribution_ROI"], -0.25, 1.25) * normalized.contribution
         + score_negative(plan["CAC"], 200.0, 1800.0) * normalized.cac
@@ -144,6 +131,7 @@ def allocate_budget(channels: pd.DataFrame, total_budget: float, opportunity_sco
         remaining_budget = total_budget - float(allocation.where(~flexible | newly_fixed, 0.0).sum())
         flexible = flexible & ~newly_fixed
 
+    # Defensive guard for unusual all-flexible edge cases where the loop exits before assignment.
     if bool(flexible.any()) and float(allocation[flexible].sum()) == 0:
         active_scores = scores.where(flexible, 0.0)
         allocation = allocation.where(~flexible, remaining_budget * active_scores / active_scores.sum())
@@ -181,10 +169,9 @@ def build_budget_bridge(combined: pd.DataFrame) -> pd.DataFrame:
     return output.sort_values("Contribution_Change", ascending=False).reset_index(drop=True)
 
 
-def build_scenario_memo(combined: pd.DataFrame, summary: pd.DataFrame) -> str:
+def build_scenario_memo(summary: pd.DataFrame, bridge: pd.DataFrame) -> str:
     current = summary.loc[summary["Plan"] == "Current Mix"].iloc[0]
     recommended = summary.loc[summary["Plan"] == "Recommended Mix"].iloc[0]
-    bridge = build_budget_bridge(combined)
     top_increase = bridge.sort_values("Spend_Change", ascending=False).iloc[0]
     top_reduce = bridge.sort_values("Spend_Change", ascending=True).iloc[0]
     revenue_uplift = float(recommended.Projected_Revenue - current.Projected_Revenue)
@@ -213,6 +200,23 @@ def classify_action(row: pd.Series) -> str:
     if change < -threshold:
         return "Reduce"
     return "Hold"
+
+
+def normalize_weights(weights: AllocationWeights) -> AllocationWeights:
+    total_weight = (
+        weights.contribution
+        + weights.cac
+        + weights.payback
+        + weights.retention
+        + weights.strategic_priority
+    ) or 1.0
+    return AllocationWeights(
+        contribution=weights.contribution / total_weight,
+        cac=weights.cac / total_weight,
+        payback=weights.payback / total_weight,
+        retention=weights.retention / total_weight,
+        strategic_priority=weights.strategic_priority / total_weight,
+    )
 
 
 def safe_divide(numerator: pd.Series, denominator: pd.Series) -> pd.Series:

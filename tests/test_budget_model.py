@@ -3,12 +3,14 @@ import unittest
 import pandas as pd
 
 from src.budget_model import (
+    AllocationWeights,
     allocate_budget,
     build_budget_bridge,
     build_opportunity_scores,
     build_plan_summary,
     build_scenario_memo,
     load_channel_data,
+    normalize_weights,
     project_plan,
     simulate_budget_plan,
 )
@@ -40,6 +42,11 @@ class BudgetModelTest(unittest.TestCase):
         scores = build_opportunity_scores(current)
         self.assertTrue((scores > 0).all())
 
+    def test_weight_normalization_is_explicit(self):
+        weights = normalize_weights(AllocationWeights(contribution=3, cac=2, payback=1, retention=1, strategic_priority=1))
+        total = weights.contribution + weights.cac + weights.payback + weights.retention + weights.strategic_priority
+        self.assertAlmostEqual(total, 1.0)
+
     def test_bridge_has_delta_columns(self):
         bridge = build_budget_bridge(self.combined)
         for column in ["Spend_Change", "Revenue_Change", "Contribution_Change", "Customer_Change"]:
@@ -59,7 +66,8 @@ class BudgetModelTest(unittest.TestCase):
         self.assertAlmostEqual(float(allocation.sum()), float(self.channels["Max_Spend"].sum()))
 
     def test_memo_mentions_diminishing_returns(self):
-        memo = build_scenario_memo(self.combined, self.summary)
+        bridge = build_budget_bridge(self.combined)
+        memo = build_scenario_memo(self.summary, bridge)
         self.assertIn("diminishing returns", memo)
         self.assertIn("Marketing Budget Allocation Memo", memo)
 
