@@ -1,0 +1,9 @@
+Channel,Funnel_Stage,Current_Spend,Min_Spend,Max_Spend,Base_Customers,ARPU,Gross_Margin,Elasticity,Retention_Rate,Strategic_Priority,Risk_Adjustment
+Google Search,High intent acquisition,45000,25000,85000,92,2100,0.76,0.72,0.86,9,0.08
+LinkedIn Ads,B2B demand generation,38000,18000,76000,54,3600,0.80,0.64,0.90,10,0.12
+Meta Ads,Mid-funnel acquisition,30000,12000,68000,88,1200,0.62,0.58,0.70,6,0.18
+TikTok Ads,Awareness and testing,22000,7000,52000,62,950,0.58,0.52,0.66,5,0.24
+Lifecycle Email,Retention and expansion,12000,6000,32000,58,1850,0.82,0.80,0.91,8,0.05
+Partner Webinars,Partner-led demand,18000,8000,46000,36,4200,0.78,0.67,0.88,8,0.10
+SEO Content,Organic pipeline,16000,10000,42000,44,2400,0.84,0.74,0.89,9,0.07
+Affiliate,Performance partnerships,14000,5000,36000,40,1500,0.60,0.61,0.72,6,0.16
